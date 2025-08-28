@@ -1,3 +1,12 @@
-<h1>This is a basic code for Hangman game illustrations .</h1>
+# Hangman Game
 
-We can later-on add hints (like name is realted to what) add more types of words , it only has animal types yet .
+A simple Hangman game implemented in Java.
+
+## Files
+- `Hangman.java` – Source code
+- `Hangman.class` – Compiled file
+
+## Run
+```bash
+javac Hangman.java
+java Hangman
