@@ -4,196 +4,205 @@ import java.util.Scanner;
 public class Hangman {
 
     public static String[] words = {"ant", "baboon", "badger", "bat", "bear", "beaver", "camel",
-    "cat", "clam", "cobra", "cougar", "coyote", "crow", "deer",
-    "dog", "donkey", "duck", "eagle", "ferret", "fox", "frog", "goat",
-    "goose", "hawk", "lion", "lizard", "llama", "mole", "monkey", "moose",
-    "mouse", "mule", "newt", "otter", "owl", "panda", "parrot", "pigeon", 
-    "python", "rabbit", "ram", "rat", "raven","rhino", "salmon", "seal",
-    "shark", "sheep", "skunk", "sloth", "snake", "spider", "stork", "swan",
-    "tiger", "toad", "trout", "turkey", "turtle", "weasel", "whale", "wolf",
-    "wombat", "zebra"
-    };
-    
+        "cat", "clam", "cobra", "cougar", "coyote", "crow", "deer",
+        "dog", "donkey", "duck", "eagle", "ferret", "fox", "frog", "goat",
+        "goose", "hawk", "lion", "lizard", "llama", "mole", "monkey", "moose",
+        "mouse", "mule", "newt", "otter", "owl", "panda", "parrot", "pigeon",
+        "python", "rabbit", "ram", "rat", "raven", "rhino", "salmon", "seal",
+        "shark", "sheep", "skunk", "sloth", "snake", "spider", "stork", "swan",
+        "tiger", "toad", "trout", "turkey", "turtle", "weasel", "whale", "wolf",
+        "wombat", "zebra"};
+
     public static String randomWord() {
         Random random = new Random();
-        int index = random.nextInt(words.length); // Random index within bounds of the words array
+        int index = random.nextInt(words.length);
         return words[index];
     }
 
+    public static String getHint(String word) {
+        // Simple hint: reveal the first letter and length of the word
+        return "The word starts with '" + word.charAt(0) + "' and is " + word.length() + " letters long.";
+    }
+
     public static void main(String[] args) {
-        
         Scanner scanner = new Scanner(System.in);
+        boolean playAgain = true;
 
-        String selectedWord = randomWord(); 
-        char[] word = selectedWord.toCharArray();
-     
-        //char[] word = "crow".toCharArray();
-        char[] copy = word.clone() ; 
-        int n = word.length;
+        while (playAgain) {
+            String selectedWord = randomWord();
+            char[] word = selectedWord.toCharArray();
+            char[] copy = word.clone();
+            int n = word.length;
+            char[] misses = new char[7];
+            char[] dash = new char[2 * n - 1];
+            int incorrect = 0;
+            int correct = 0;
+            int mistakes_count = 0;
+            boolean hintUsed = false;
 
-        char[] misses = new char[20];
-
-        int incorrect = 0 ;
-        int correct = 0 ;
-        int mistakes_count = 0;
-
-        char[] dash = new char[2*n+1] ;
-
-            for(int i = 0 ; i < 2*n ; i++){
-                dash[i]='_';
-                dash[i+1]=' ';
-                i++;
+            // Initialize dash array
+            for (int i = 0; i < n; i++) {
+                dash[2 * i] = '_';
+                if (i < n - 1) dash[2 * i + 1] = ' ';
             }
 
-        while( incorrect < 7 ){
-            gallows(incorrect+1);
-            System.out.print("Word: ");
+            System.out.println("Welcome to Hangman! Guess the word by entering one letter at a time.");
+            System.out.println("Enter 'hint' for a hint (costs one guess). You have 7 incorrect guesses.");
 
-            System.out.print(new String(dash));
+            while (incorrect < 7) {
+                gallows(incorrect);
+                System.out.print("Word: ");
+                System.out.println(new String(dash));
+                System.out.print("Misses: ");
+                for (int i = 0; i < mistakes_count; i++) {
+                    System.out.print(misses[i] + " ");
+                }
+                System.out.println("\n");
+                System.out.print("Guess (or 'hint' for a hint): ");
 
-            System.out.println("\n");
-            System.out.print("Misses: ");
+                String input = scanner.next().toLowerCase();
 
-            System.out.print(new String(misses));
-            System.out.print("\n\n");
+                if (input.equals("hint") && !hintUsed) {
+                    System.out.println(getHint(selectedWord));
+                    incorrect++;
+                    hintUsed = true;
+                    continue;
+                }
 
-            System.out.print("Guess: ");
+                if (input.length() != 1 || !Character.isLetter(input.charAt(0))) {
+                    System.out.println("Please enter a single letter.");
+                    continue;
+                }
 
-            char guess = scanner.next().charAt(0);
+                char guess = input.charAt(0);
+                boolean alreadyGuessed = false;
+                for (int i = 0; i < mistakes_count; i++) {
+                    if (misses[i] == guess) alreadyGuessed = true;
+                }
+                for (int i = 0; i < n; i++) {
+                    if (dash[2 * i] == guess) alreadyGuessed = true;
+                }
+                if (alreadyGuessed) {
+                    System.out.println("You've already guessed '" + guess + "'. Try another letter.");
+                    continue;
+                }
 
-            int flag = 0 ;
-            for(int i = 0 ; i < n ; i++){
-                if(word[i]==guess){
-                    flag=1;
-                    dash[2*i]=guess;
-                    word[i]=0;
-                    correct++; //if correct = n ; user won ; 
+                boolean found = false;
+                for (int i = 0; i < n; i++) {
+                    if (word[i] == guess) {
+                        dash[2 * i] = guess;
+                        word[i] = 0;
+                        correct++;
+                        found = true;
+                    }
+                }
+
+                if (!found) {
+                    incorrect++;
+                    misses[mistakes_count] = guess;
+                    mistakes_count++;
+                }
+
+                if (correct == n) {
+                    gallows(incorrect);
+                    System.out.print("Word: ");
+                    System.out.println(new String(dash));
+                    System.out.println("\nThe word was: " + new String(copy));
+                    System.out.println("You won!");
+                    break;
+                }
+
+                if (incorrect == 7) {
+                    gallows(incorrect);
+                    System.out.println("\nThe word was: " + new String(copy));
+                    System.out.println("You lost!");
                     break;
                 }
             }
 
-            if(flag==0){
-                incorrect++;//if incorrct = 6 ; user lose
-                misses[mistakes_count] = guess;
-                mistakes_count++;
-            }    
-
-            if(correct==n){
-                System.out.print("\n\n");
-                System.out.print("The Word was:  ");
-                System.out.println(new String(copy));
-                System.out.print("\n\n");
-
-                System.out.println("You won");
-                System.out.print("\n\n");
-
-                System.exit(0);
-            }
-
-            if(incorrect==7){
-                System.out.print("\n\n");
-                System.out.print("The Word was:  ");
-                System.out.println(new String(copy));
-                System.out.print("\n\n");
-
-                System.out.println("You lost");
-                System.out.print("\n\n");
-
-                System.exit(0);
-            }
+            System.out.print("Play again? (y/n): ");
+            playAgain = scanner.next().toLowerCase().startsWith("y");
+            System.out.println();
         }
-        
+
+        System.out.println("Thanks for playing Hangman!");
         scanner.close();
     }
-    
-    public static void gallows(int a) {
-    
-            switch (a) {
-    
-                case 1:
-                    System.out.println(
-                            "+---+\n" +
-                            "|   |\n" +
-                            "    |\n" +
-                            "    |\n" +
-                            "    |\n" +
-                            "    |\n" +
-                            "=========\n");
-                    break;
-    
-                case 2:
-                    System.out.println(
-                            "+---+\n" +
-                            "|   |\n" +
-                            "O   |\n" +
-                            "    |\n" +
-                            "    |\n" +
-                            "    |\n" +
-                            "=========\n");
-                    break;
-    
-                case 3:
-                    System.out.println(
-                            "+---+\n" +
-                            "|   |\n" +
-                            "O   |\n" +
-                            "|   |\n" +
-                            "    |\n" +
-                            "    |\n" +
-                            "=========\n");
-                    break;
-    
-                case 4:
-                    System.out.println(
-                            "+---+\n" +
-                            "|   |\n" +
-                            "O   |\n" +
-                            "/|  |\n" +
-                            "    |\n" +
-                            "    |\n" +
-                            "=========\n");
-                    break;
-    
-                case 5:
-                    System.out.println(
-                            "+---+\n" +
-                            "|   |\n" +
-                            "O   |\n" +
-                            "/|\\ |\n" +
-                            "    |\n" +
-                            "    |\n" +
-                            "=========\n");
-                    break;
-    
-                case 6:
-                    System.out.println(
-                            "+---+\n" +
-                            "|   |\n" +
-                            "O   |\n" +
-                            "/|\\ |\n" +
-                            "/   |\n" +
-                            "    |\n" +
-                            "=========\n");
-                    break;
-    
-                case 7:
-                    System.out.println(
-                            "+---+\n" +
-                            "|   |\n" +
-                            "O   |\n" +
-                            "/|\\ |\n" +
-                            "/ \\ |\n" +
-                            "    |\n" +
-                            "=========\n");
-                    break;
-    
-                default:
-                    System.out.println("Invalid number of incorrect guesses!");
-            }
+
+    public static void gallows(int incorrect) {
+        switch (incorrect) {
+            case 0:
+                System.out.println(
+                        "+---+\n" +
+                        "|   |\n" +
+                        "    |\n" +
+                        "    |\n" +
+                        "    |\n" +
+                        "    |\n" +
+                        "=========");
+                break;
+            case 1:
+                System.out.println(
+                        "+---+\n" +
+                        "|   |\n" +
+                        "O   |\n" +
+                        "    |\n" +
+                        "    |\n" +
+                        "    |\n" +
+                        "=========");
+                break;
+            case 2:
+                System.out.println(
+                        "+---+\n" +
+                        "|   |\n" +
+                        "O   |\n" +
+                        "|   |\n" +
+                        "    |\n" +
+                        "    |\n" +
+                        "=========");
+                break;
+            case 3:
+                System.out.println(
+                        "+---+\n" +
+                        "|   |\n" +
+                        "O   |\n" +
+                        "/|  |\n" +
+                        "    |\n" +
+                        "    |\n" +
+                        "=========");
+                break;
+            case 4:
+                System.out.println(
+                        "+---+\n" +
+                        "|   |\n" +
+                        "O   |\n" +
+                        "/|\\ |\n" +
+                        "    |\n" +
+                        "    |\n" +
+                        "=========");
+                break;
+            case 5:
+                System.out.println(
+                        "+---+\n" +
+                        "|   |\n" +
+                        "O   |\n" +
+                        "/|\\ |\n" +
+                        "/   |\n" +
+                        "    |\n" +
+                        "=========");
+                break;
+            case 6:
+                System.out.println(
+                        "+---+\n" +
+                        "|   |\n" +
+                        "O   |\n" +
+                        "/|\\ |\n" +
+                        "/ \\ |\n" +
+                        "    |\n" +
+                        "=========");
+                break;
+            default:
+                System.out.println("Invalid number of incorrect guesses!");
         }
     }
-
-
-
-
-
+}
